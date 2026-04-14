@@ -8,6 +8,7 @@ TOOL_NAME = "decide_buy_now_or_wait"
 PROTOCOL_VERSION = "2024-11-05"
 SAVINGS_PER_DAY_THRESHOLD = 10.0
 CONTACT_EMAIL = "sidcraigau@gmail.com"
+OPENAI_APPS_CHALLENGE_TOKEN = "W8pCh6el9UMivB2UlLu_hJxTu52QcYM1d7APAjiMhyhU"
 
 PRIVACY_HTML = f"""<!doctype html>
 <html lang=\"en\">
@@ -112,6 +113,11 @@ def tools_list_payload() -> Dict[str, Any]:
                     "required": ["current_price", "future_price", "wait_time_days", "urgency"],
                     "additionalProperties": False,
                 },
+                "annotations": {
+                    "readOnlyHint": False,
+                    "openWorldHint": True,
+                    "destructiveHint": False,
+                },
             }
         ]
     }
@@ -191,6 +197,14 @@ class MCPHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
+    def _send_text(self, status_code: int, text: str) -> None:
+        body = text.encode("utf-8")
+        self.send_response(status_code)
+        self.send_header("Content-Type", "text/plain")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
     def do_GET(self) -> None:
         if self.path == "/health":
             self._send_json(200, {"status": "ok", "app": APP_NAME})
@@ -206,6 +220,10 @@ class MCPHandler(BaseHTTPRequestHandler):
 
         if self.path == "/mcp":
             self._send_json(200, {"message": "MCP endpoint is available. Use POST for JSON-RPC requests."})
+            return
+
+        if self.path == "/.well-known/openai-apps-challenge":
+            self._send_text(200, OPENAI_APPS_CHALLENGE_TOKEN)
             return
 
         self._send_json(404, {"error": "Not found"})
