@@ -7,6 +7,58 @@ APP_NAME = "buy-now-or-wait-v2"
 TOOL_NAME = "decide_buy_now_or_wait"
 PROTOCOL_VERSION = "2024-11-05"
 SAVINGS_PER_DAY_THRESHOLD = 10.0
+CONTACT_EMAIL = "sidcraigau@gmail.com"
+
+PRIVACY_HTML = f"""<!doctype html>
+<html lang=\"en\">
+<head>
+  <meta charset=\"utf-8\" />
+  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />
+  <title>Buy Now or Wait v2 - Privacy Policy</title>
+</head>
+<body>
+  <h1>Privacy Policy</h1>
+  <p>Buy Now or Wait v2 processes user-provided shopping decision inputs to return deterministic guidance.</p>
+  <h2>Inputs We Process</h2>
+  <ul>
+    <li>current_price</li>
+    <li>future_price</li>
+    <li>wait_time_days</li>
+    <li>urgency</li>
+  </ul>
+  <h2>How Data Is Used</h2>
+  <p>Inputs are used only to compute a deterministic buy-now-or-wait recommendation and reasoning for the current request.</p>
+  <h2>Data Sharing</h2>
+  <p>We do not sell user input data and do not share it with third parties for advertising.</p>
+  <h2>Retention</h2>
+  <p>This service is stateless and does not intentionally retain request data beyond normal transient processing and platform operational logs.</p>
+  <h2>Contact</h2>
+  <p>For privacy questions, contact <a href=\"mailto:{CONTACT_EMAIL}\">{CONTACT_EMAIL}</a>.</p>
+</body>
+</html>
+"""
+
+TERMS_HTML = f"""<!doctype html>
+<html lang=\"en\">
+<head>
+  <meta charset=\"utf-8\" />
+  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />
+  <title>Buy Now or Wait v2 - Terms of Service</title>
+</head>
+<body>
+  <h1>Terms of Service</h1>
+  <p>Buy Now or Wait v2 is provided for informational use only.</p>
+  <h2>No Guarantee</h2>
+  <p>We do not guarantee future prices, discounts, product availability, or timing of promotions.</p>
+  <h2>User Responsibility</h2>
+  <p>Users must verify final prices, seller terms, and eligibility for any discount before purchasing.</p>
+  <h2>Service Availability</h2>
+  <p>Service features and availability may change at any time.</p>
+  <h2>Contact</h2>
+  <p>For terms questions, contact <a href=\"mailto:{CONTACT_EMAIL}\">{CONTACT_EMAIL}</a>.</p>
+</body>
+</html>
+"""
 
 
 def jsonrpc_result(request_id: Any, result: Dict[str, Any]) -> Dict[str, Any]:
@@ -52,20 +104,12 @@ def tools_list_payload() -> Dict[str, Any]:
                         "current_price": {"type": "number"},
                         "future_price": {"type": "number"},
                         "wait_time_days": {"type": "number", "minimum": 0},
-                        "urgency": {"type": "string", "enum": ["urgent", "not_urgent"]},
+                        "urgency": {
+                            "type": "string",
+                            "enum": ["urgent", "soon", "not_urgent", "flexible"],
+                        },
                     },
                     "required": ["current_price", "future_price", "wait_time_days", "urgency"],
-                    "additionalProperties": False,
-                },
-                "outputSchema": {
-                    "type": "object",
-                    "properties": {
-                        "decision": {"type": "string", "enum": ["buy_now", "wait"]},
-                        "savings": {"type": "number"},
-                        "wait_cost": {"type": "number"},
-                        "reason": {"type": "string"},
-                    },
-                    "required": ["decision", "savings", "wait_cost", "reason"],
                     "additionalProperties": False,
                 },
             }
@@ -89,15 +133,18 @@ def decide(arguments: Dict[str, Any]) -> Dict[str, Any]:
     current_price = float(arguments["current_price"])
     future_price = float(arguments["future_price"])
     wait_time_days = float(arguments["wait_time_days"])
-    urgency = str(arguments["urgency"])
+    urgency = str(arguments["urgency"]).lower().strip()
+
+    if urgency not in {"urgent", "soon", "not_urgent", "flexible"}:
+        raise ValueError("Invalid urgency. Use one of: urgent, soon, not_urgent, flexible")
 
     savings = round(current_price - future_price, 2)
     wait_cost = round(wait_time_days, 2)
 
-    if urgency == "urgent":
+    if urgency in {"urgent", "soon"}:
         decision = "buy_now"
         reason = (
-            "Urgency is 'urgent', so the deterministic rule is to buy now "
+            f"Urgency is '{urgency}', so the deterministic rule is to buy now "
             "regardless of potential savings."
         )
     else:
@@ -136,10 +183,31 @@ class MCPHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
+    def _send_html(self, status_code: int, html: str) -> None:
+        body = html.encode("utf-8")
+        self.send_response(status_code)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
     def do_GET(self) -> None:
         if self.path == "/health":
             self._send_json(200, {"status": "ok", "app": APP_NAME})
             return
+
+        if self.path == "/privacy":
+            self._send_html(200, PRIVACY_HTML)
+            return
+
+        if self.path == "/terms":
+            self._send_html(200, TERMS_HTML)
+            return
+
+        if self.path == "/mcp":
+            self._send_json(200, {"message": "MCP endpoint is available. Use POST for JSON-RPC requests."})
+            return
+
         self._send_json(404, {"error": "Not found"})
 
     def do_POST(self) -> None:
