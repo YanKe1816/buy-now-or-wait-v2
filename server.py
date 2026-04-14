@@ -8,7 +8,7 @@ TOOL_NAME = "decide_buy_now_or_wait"
 PROTOCOL_VERSION = "2024-11-05"
 SAVINGS_PER_DAY_THRESHOLD = 10.0
 CONTACT_EMAIL = "sidcraigau@gmail.com"
-OPENAI_APPS_CHALLENGE_TOKEN = "W8pCh6el9UMivB2UlLu_hJxTu52QcYM1d7APAjiMhyhU"
+OPENAI_APPS_CHALLENGE_TOKEN = "w8pCh6eL9UMivB2UJLu_hJxIu52QcYMJd7APAjHmyhU"
 
 PRIVACY_HTML = f"""<!doctype html>
 <html lang=\"en\">
