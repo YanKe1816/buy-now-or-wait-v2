@@ -8,18 +8,38 @@ TOOL_NAME = "decide_buy_now_or_wait"
 PROTOCOL_VERSION = "2024-11-05"
 SAVINGS_PER_DAY_THRESHOLD = 10.0
 CONTACT_EMAIL = "sidcraigau@gmail.com"
-OPENAI_APPS_CHALLENGE_TOKEN = "w8pCh6eL9UMivB2UJLu_hJxIu52QcYMJd7APAjHmyhU"
+OPENAI_APPS_CHALLENGE_TOKEN = os.environ.get("OPENAI_APPS_CHALLENGE_TOKEN", "")
+
+ROOT_HTML = f"""<!doctype html>
+<html lang=\"en\">
+<head>
+  <meta charset=\"utf-8\" />
+  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />
+  <title>Buy Now or Wait: Price Timing</title>
+</head>
+<body>
+  <h1>Buy Now or Wait: Price Timing</h1>
+  <p>Buy Now or Wait: Price Timing helps users decide whether to buy now or wait based on price timing and urgency.</p>
+  <ul>
+    <li><a href=\"/privacy\">Privacy</a></li>
+    <li><a href=\"/terms\">Terms</a></li>
+    <li><a href=\"/support\">Support</a></li>
+  </ul>
+  <p>Support email: <a href=\"mailto:{CONTACT_EMAIL}\">{CONTACT_EMAIL}</a></p>
+</body>
+</html>
+"""
 
 PRIVACY_HTML = f"""<!doctype html>
 <html lang=\"en\">
 <head>
   <meta charset=\"utf-8\" />
   <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />
-  <title>Buy Now or Wait v2 - Privacy Policy</title>
+  <title>Buy Now or Wait: Price Timing - Privacy Policy</title>
 </head>
 <body>
   <h1>Privacy Policy</h1>
-  <p>Buy Now or Wait v2 processes user-provided shopping decision inputs to return deterministic guidance.</p>
+  <p>Buy Now or Wait: Price Timing processes user-provided shopping decision inputs to return deterministic guidance.</p>
   <h2>Inputs We Process</h2>
   <ul>
     <li>current_price</li>
@@ -44,11 +64,11 @@ TERMS_HTML = f"""<!doctype html>
 <head>
   <meta charset=\"utf-8\" />
   <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />
-  <title>Buy Now or Wait v2 - Terms of Service</title>
+  <title>Buy Now or Wait: Price Timing - Terms of Service</title>
 </head>
 <body>
   <h1>Terms of Service</h1>
-  <p>Buy Now or Wait v2 is provided for informational use only.</p>
+  <p>Buy Now or Wait: Price Timing is provided for informational use only.</p>
   <h2>No Guarantee</h2>
   <p>We do not guarantee future prices, discounts, product availability, or timing of promotions.</p>
   <h2>User Responsibility</h2>
@@ -57,6 +77,26 @@ TERMS_HTML = f"""<!doctype html>
   <p>Service features and availability may change at any time.</p>
   <h2>Contact</h2>
   <p>For terms questions, contact <a href=\"mailto:{CONTACT_EMAIL}\">{CONTACT_EMAIL}</a>.</p>
+</body>
+</html>
+"""
+
+SUPPORT_HTML = f"""<!doctype html>
+<html lang=\"en\">
+<head>
+  <meta charset=\"utf-8\" />
+  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />
+  <title>Support</title>
+</head>
+<body>
+  <h1>Support</h1>
+  <p>For support, product questions, or feedback about Buy Now or Wait: Price Timing, contact <a href=\"mailto:{CONTACT_EMAIL}\">{CONTACT_EMAIL}</a>.</p>
+  <p>For privacy or policy questions, you can use the same contact email.</p>
+  <ul>
+    <li><a href=\"/\">Home</a></li>
+    <li><a href=\"/privacy\">Privacy</a></li>
+    <li><a href=\"/terms\">Terms</a></li>
+  </ul>
 </body>
 </html>
 """
@@ -206,6 +246,14 @@ class MCPHandler(BaseHTTPRequestHandler):
         self.wfile.write(body)
 
     def do_GET(self) -> None:
+        if self.path == "/":
+            self._send_html(200, ROOT_HTML)
+            return
+
+        if self.path == "/support":
+            self._send_html(200, SUPPORT_HTML)
+            return
+
         if self.path == "/health":
             self._send_json(200, {"status": "ok", "app": APP_NAME})
             return
