@@ -331,25 +331,25 @@ class MCPHandler(BaseHTTPRequestHandler):
                 savings_per_day = price_difference if wait_time_days <= 0 else price_difference / wait_time_days
 
             if urgency in {"urgent", "soon"}:
-                interpretation = "Urgency parameter is urgent or soon, so the deterministic rule returns the buy_now result."
+                explanation = "Urgency parameter is urgent or soon, so the deterministic rule returns the buy_now result."
             elif price_difference <= 0:
-                interpretation = "No positive price difference is detected based on the provided inputs."
+                explanation = "No positive price difference is detected based on the provided inputs."
             elif savings_per_day > SAVINGS_PER_DAY_THRESHOLD:
-                interpretation = "Savings per day is above the configured threshold."
+                explanation = "Savings per day is above the configured threshold."
             else:
-                interpretation = "Savings per day is below the configured threshold."
+                explanation = "Savings per day is below the configured threshold."
 
             result = {
                 "content": [
                     {
                         "type": "text",
                         "text": (
-                            f"Decision: {'Buy now' if decision['decision'] == 'buy_now' else 'Wait'}\n\n"
+                            f"Decision: {'Buy now' if decision['decision'] == 'buy_now' else 'Wait'}\n"
                             f"Price difference: {price_difference:.2f}\n"
                             f"Wait time: {wait_time_days:.2f} days\n"
                             f"Savings per day: {savings_per_day:.2f}\n\n"
-                            "Interpretation:\n"
-                            f"{interpretation}\n\n"
+                            "Explanation:\n"
+                            f"{explanation}\n\n"
                             "Note:\n"
                             "This is an informational computation based only on provided inputs.\n"
                             "It does not use external data, access the internet, or perform any real-world actions."
