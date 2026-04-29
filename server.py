@@ -331,13 +331,13 @@ class MCPHandler(BaseHTTPRequestHandler):
                 savings_per_day = price_difference if wait_time_days <= 0 else price_difference / wait_time_days
 
             if urgency in {"urgent", "soon"}:
-                explanation = "Urgency parameter is urgent or soon, so the deterministic rule returns the buy_now result."
+                explanation = "Urgency parameter is urgent or soon, and the deterministic rule returns the buy_now result."
             elif price_difference <= 0:
                 explanation = "No positive price difference is detected based on the provided inputs."
             elif savings_per_day > SAVINGS_PER_DAY_THRESHOLD:
-                explanation = "Savings per day is above the configured threshold."
+                explanation = "A positive price difference is detected and savings per day exceeds the threshold."
             else:
-                explanation = "Savings per day is below the configured threshold."
+                explanation = "A positive price difference is detected and savings per day is at or below the threshold."
 
             result = {
                 "content": [
