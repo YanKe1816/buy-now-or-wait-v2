@@ -3,7 +3,7 @@ import os
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from typing import Any, Dict, Tuple
 
-APP_NAME = "buy-now-or-wait-v2"
+APP_NAME = "price-timing-calculator"
 TOOL_NAME = "decide_buy_now_or_wait"
 PROTOCOL_VERSION = "2024-11-05"
 SAVINGS_PER_DAY_THRESHOLD = 10.0
@@ -15,11 +15,11 @@ ROOT_HTML = f"""<!doctype html>
 <head>
   <meta charset=\"utf-8\" />
   <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />
-  <title>Buy Now or Wait: Price Timing</title>
+  <title>Price Timing Calculator</title>
 </head>
 <body>
-  <h1>Buy Now or Wait: Price Timing</h1>
-  <p>Buy Now or Wait: Price Timing helps users decide whether to buy now or wait based on price timing and urgency.</p>
+  <h1>Price Timing Calculator</h1>
+  <p>A deterministic calculator that compares user-provided current price, expected future price, wait time, and urgency to produce an informational timing result.</p>
   <ul>
     <li><a href=\"/privacy\">Privacy</a></li>
     <li><a href=\"/terms\">Terms</a></li>
@@ -35,11 +35,11 @@ PRIVACY_HTML = f"""<!doctype html>
 <head>
   <meta charset=\"utf-8\" />
   <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />
-  <title>Buy Now or Wait: Price Timing - Privacy Policy</title>
+  <title>Privacy Policy</title>
 </head>
 <body>
   <h1>Privacy Policy</h1>
-  <p>Buy Now or Wait: Price Timing processes user-provided shopping decision inputs to return deterministic guidance.</p>
+  <p>Price Timing Calculator processes user-provided price timing inputs to return a deterministic informational calculation.</p>
   <h2>Inputs We Process</h2>
   <ul>
     <li>current_price</li>
@@ -48,9 +48,9 @@ PRIVACY_HTML = f"""<!doctype html>
     <li>urgency</li>
   </ul>
   <h2>How Data Is Used</h2>
-  <p>Inputs are used only to compute a deterministic buy-now-or-wait recommendation and reasoning for the current request.</p>
-  <h2>Data Sharing</h2>
-  <p>We do not sell user input data and do not share it with third parties for advertising.</p>
+  <p>Inputs are used only to compute a deterministic price timing result for the current request.</p>
+  <h2>No External Data</h2>
+  <p>This service does not access external pricing sources, retailers, checkout pages, accounts, carts, or the internet.</p>
   <h2>Retention</h2>
   <p>This service is stateless and does not intentionally retain request data beyond normal transient processing and platform operational logs.</p>
   <h2>Contact</h2>
@@ -64,15 +64,17 @@ TERMS_HTML = f"""<!doctype html>
 <head>
   <meta charset=\"utf-8\" />
   <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />
-  <title>Buy Now or Wait: Price Timing - Terms of Service</title>
+  <title>Terms of Service</title>
 </head>
 <body>
   <h1>Terms of Service</h1>
-  <p>Buy Now or Wait: Price Timing is provided for informational use only.</p>
+  <p>Price Timing Calculator is provided for informational calculation only.</p>
   <h2>No Guarantee</h2>
-  <p>We do not guarantee future prices, discounts, product availability, or timing of promotions.</p>
+  <p>It does not guarantee future prices, discounts, availability, or promotion timing.</p>
+  <h2>No Real-World Actions</h2>
+  <p>It does not make purchases or perform real-world actions.</p>
   <h2>User Responsibility</h2>
-  <p>Users must verify final prices, seller terms, and eligibility for any discount before purchasing.</p>
+  <p>Users are responsible for independently verifying prices, seller terms, and discount eligibility before making any purchase.</p>
   <h2>Service Availability</h2>
   <p>Service features and availability may change at any time.</p>
   <h2>Contact</h2>
@@ -90,7 +92,8 @@ SUPPORT_HTML = f"""<!doctype html>
 </head>
 <body>
   <h1>Support</h1>
-  <p>For support, product questions, or feedback about Buy Now or Wait: Price Timing, contact <a href=\"mailto:{CONTACT_EMAIL}\">{CONTACT_EMAIL}</a>.</p>
+  <p>For support, questions, or feedback about Price Timing Calculator, contact:</p>
+  <p><a href=\"mailto:{CONTACT_EMAIL}\">{CONTACT_EMAIL}</a></p>
   <p>For privacy or policy questions, you can use the same contact email.</p>
   <ul>
     <li><a href=\"/\">Home</a></li>
@@ -136,8 +139,10 @@ def tools_list_payload() -> Dict[str, Any]:
             {
                 "name": TOOL_NAME,
                 "description": (
-                    "Decide whether to buy now or wait using current price, expected "
-                    "future price, waiting time, and urgency."
+                    "Deterministic calculator that computes an informational price timing result "
+                    "from user-provided current price, expected future price, wait time, and "
+                    "urgency. It does not use external data, access the internet, perform "
+                    "purchases, or take real-world actions."
                 ),
                 "inputSchema": {
                     "type": "object",
@@ -154,8 +159,8 @@ def tools_list_payload() -> Dict[str, Any]:
                     "additionalProperties": False,
                 },
                 "annotations": {
-                    "readOnlyHint": False,
-                    "openWorldHint": True,
+                    "readOnlyHint": True,
+                    "openWorldHint": False,
                     "destructiveHint": False,
                 },
             }
@@ -323,13 +328,34 @@ class MCPHandler(BaseHTTPRequestHandler):
                 self._send_json(200, jsonrpc_error(request_id, -32602, "Invalid arguments"))
                 return
 
+            urgency = str(arguments.get("urgency", "")).lower().strip()
+            wait_time_days = float(arguments.get("wait_time_days", 0))
+            price_difference = float(decision["savings"])
+            savings_per_day = price_difference if wait_time_days <= 0 else price_difference / wait_time_days
+
+            if urgency == "urgent":
+                interpretation = "Urgency is set to urgent, so the deterministic rule returns Buy now."
+            elif price_difference == 0:
+                interpretation = "No price difference is detected based on the provided inputs."
+            elif savings_per_day > SAVINGS_PER_DAY_THRESHOLD:
+                interpretation = "The computed savings per day is above the configured threshold."
+            else:
+                interpretation = "The computed savings per day is below the configured threshold."
+
             result = {
                 "content": [
                     {
                         "type": "text",
                         "text": (
-                            f"Decision: {decision['decision']}. Savings={decision['savings']}, "
-                            f"WaitCost={decision['wait_cost']}. Reason: {decision['reason']}"
+                            f"Decision: {'Buy now' if decision['decision'] == 'buy_now' else 'Wait'}\n\n"
+                            f"Price difference: {price_difference:.2f}\n"
+                            f"Wait time: {wait_time_days:.2f} days\n"
+                            f"Savings per day: {savings_per_day:.2f}\n\n"
+                            "Interpretation:\n"
+                            f"{interpretation}\n\n"
+                            "Note:\n"
+                            "This result is an informational computation based only on provided inputs. "
+                            "It does not use external data, access the internet, or perform any real-world actions."
                         ),
                     }
                 ],
