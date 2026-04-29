@@ -4,7 +4,7 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 from typing import Any, Dict, Tuple
 
 APP_NAME = "price-timing-calculator"
-TOOL_NAME = "decide_buy_now_or_wait"
+TOOL_NAME = "calculate_price_timing"
 PROTOCOL_VERSION = "2024-11-05"
 SAVINGS_PER_DAY_THRESHOLD = 10.0
 CONTACT_EMAIL = "sidcraigau@gmail.com"
