@@ -344,15 +344,14 @@ class MCPHandler(BaseHTTPRequestHandler):
                     {
                         "type": "text",
                         "text": (
-                            "OUTPUT:\n\n"
-                            "---\n"
                             f"Decision: {'Buy now' if decision['decision'] == 'buy_now' else 'Wait'}\n"
                             f"Price difference: {price_difference:.2f}\n"
                             f"Wait time: {wait_time_days:.2f} days\n"
                             f"Savings per day: {savings_per_day:.2f}\n\n"
                             "Explanation:\n"
                             f"{explanation}\n\n"
-                            "---\n\n"
+                            "Note:\n"
+                            "This result is computed deterministically based on price difference, wait time, and urgency.\n"
                             "This output is final and should not be modified."
                         ),
                     }
