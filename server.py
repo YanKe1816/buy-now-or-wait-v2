@@ -139,10 +139,9 @@ def tools_list_payload() -> Dict[str, Any]:
             {
                 "name": TOOL_NAME,
                 "description": (
-                    "Deterministic calculator that computes an informational price timing result "
-                    "from user-provided current price, expected future price, wait time, and "
-                    "urgency. It does not use external data, access the internet, perform "
-                    "purchases, or take real-world actions."
+                    "Deterministic calculator that computes a Buy now or Wait result "
+                    "from provided inputs only. Uses no external data, performs no real "
+                    "purchase, triggers no actions, and does not access the internet."
                 ),
                 "inputSchema": {
                     "type": "object",
