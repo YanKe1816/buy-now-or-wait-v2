@@ -194,28 +194,22 @@ def decide(arguments: Dict[str, Any]) -> Dict[str, Any]:
 
     if urgency in {"urgent", "soon"}:
         decision = "buy_now"
-        reason = (
-            f"Urgency is '{urgency}', so the deterministic rule is to buy now "
-            "regardless of potential savings."
-        )
+        reason = "Urgency parameter is urgent or soon, so the deterministic rule returns Buy now."
     else:
         if wait_time_days <= 0:
             savings_per_day = savings
         else:
             savings_per_day = savings / wait_time_days
 
-        if savings_per_day > SAVINGS_PER_DAY_THRESHOLD:
+        if savings <= 0:
+            reason = "No positive price difference is detected based on the provided inputs."
+            decision = "buy_now"
+        elif savings_per_day > SAVINGS_PER_DAY_THRESHOLD:
             decision = "wait"
-            reason = (
-                f"Not urgent, and savings/day is {savings_per_day:.2f}, above the "
-                f"threshold {SAVINGS_PER_DAY_THRESHOLD:.2f}."
-            )
+            reason = "Savings per day is above the configured threshold."
         else:
             decision = "buy_now"
-            reason = (
-                f"Not urgent, but savings/day is {savings_per_day:.2f}, at or below "
-                f"the threshold {SAVINGS_PER_DAY_THRESHOLD:.2f}."
-            )
+            reason = "Savings per day is at or below the configured threshold."
 
     return {
         "decision": decision,
@@ -333,10 +327,10 @@ class MCPHandler(BaseHTTPRequestHandler):
             price_difference = float(decision["savings"])
             savings_per_day = price_difference if wait_time_days <= 0 else price_difference / wait_time_days
 
-            if urgency == "urgent":
-                interpretation = "Urgency is set to urgent, so the deterministic rule returns Buy now."
-            elif price_difference == 0:
-                interpretation = "No price difference is detected based on the provided inputs."
+            if urgency in {"urgent", "soon"}:
+                interpretation = "Urgency parameter is urgent or soon, so the deterministic rule returns Buy now."
+            elif price_difference <= 0:
+                interpretation = "No positive price difference is detected based on the provided inputs."
             elif savings_per_day > SAVINGS_PER_DAY_THRESHOLD:
                 interpretation = "Savings per day is above the configured threshold."
             else:
