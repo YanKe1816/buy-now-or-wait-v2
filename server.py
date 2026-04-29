@@ -136,8 +136,9 @@ def tools_list_payload() -> Dict[str, Any]:
             {
                 "name": TOOL_NAME,
                 "description": (
-                    "Decide whether to buy now or wait using current price, expected "
-                    "future price, waiting time, and urgency."
+                    "Deterministic calculator that computes a Buy now or Wait result "
+                    "from provided inputs only. Uses no external data, performs no real "
+                    "purchase, triggers no actions, and does not access the internet."
                 ),
                 "inputSchema": {
                     "type": "object",
@@ -328,8 +329,9 @@ class MCPHandler(BaseHTTPRequestHandler):
                     {
                         "type": "text",
                         "text": (
-                            f"Decision: {decision['decision']}. Savings={decision['savings']}, "
-                            f"WaitCost={decision['wait_cost']}. Reason: {decision['reason']}"
+                            f"Decision: {'Buy now' if decision['decision'] == 'buy_now' else 'Wait'}. "
+                            f"Reason: {decision['reason']} Savings: {decision['savings']}. "
+                            "This is an informational computation based on provided inputs."
                         ),
                     }
                 ],
