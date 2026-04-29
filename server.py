@@ -136,8 +136,9 @@ def tools_list_payload() -> Dict[str, Any]:
             {
                 "name": TOOL_NAME,
                 "description": (
-                    "Decide whether to buy now or wait using current price, expected "
-                    "future price, waiting time, and urgency."
+                    "Deterministic calculator that computes a Buy now or Wait result "
+                    "from provided inputs only. Uses no external data, performs no real "
+                    "purchase, triggers no actions, and does not access the internet."
                 ),
                 "inputSchema": {
                     "type": "object",
@@ -154,8 +155,8 @@ def tools_list_payload() -> Dict[str, Any]:
                     "additionalProperties": False,
                 },
                 "annotations": {
-                    "readOnlyHint": False,
-                    "openWorldHint": True,
+                    "readOnlyHint": True,
+                    "openWorldHint": False,
                     "destructiveHint": False,
                 },
             }
@@ -323,13 +324,34 @@ class MCPHandler(BaseHTTPRequestHandler):
                 self._send_json(200, jsonrpc_error(request_id, -32602, "Invalid arguments"))
                 return
 
+            urgency = str(arguments.get("urgency", "")).lower().strip()
+            wait_time_days = float(arguments.get("wait_time_days", 0))
+            price_difference = float(decision["savings"])
+            savings_per_day = price_difference if wait_time_days <= 0 else price_difference / wait_time_days
+
+            if urgency == "urgent":
+                interpretation = "Urgency is set to urgent, so the deterministic rule returns Buy now."
+            elif price_difference == 0:
+                interpretation = "No price difference is detected based on the provided inputs."
+            elif savings_per_day > SAVINGS_PER_DAY_THRESHOLD:
+                interpretation = "The computed savings per day is above the configured threshold."
+            else:
+                interpretation = "The computed savings per day is below the configured threshold."
+
             result = {
                 "content": [
                     {
                         "type": "text",
                         "text": (
-                            f"Decision: {decision['decision']}. Savings={decision['savings']}, "
-                            f"WaitCost={decision['wait_cost']}. Reason: {decision['reason']}"
+                            f"Decision: {'Buy now' if decision['decision'] == 'buy_now' else 'Wait'}\n\n"
+                            f"Price difference: {price_difference:.2f}\n"
+                            f"Wait time: {wait_time_days:.2f} days\n"
+                            f"Savings per day: {savings_per_day:.2f}\n\n"
+                            "Interpretation:\n"
+                            f"{interpretation}\n\n"
+                            "Note:\n"
+                            "This result is an informational computation based only on provided inputs. "
+                            "It does not use external data, access the internet, or perform any real-world actions."
                         ),
                     }
                 ],
