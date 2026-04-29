@@ -194,7 +194,7 @@ def decide(arguments: Dict[str, Any]) -> Dict[str, Any]:
 
     if urgency in {"urgent", "soon"}:
         decision = "buy_now"
-        reason = "Urgency parameter is urgent or soon, so the deterministic rule returns Buy now."
+        reason = "Urgency parameter is urgent or soon, so the deterministic rule returns the buy_now result."
     else:
         if wait_time_days <= 0:
             savings_per_day = savings
@@ -325,10 +325,13 @@ class MCPHandler(BaseHTTPRequestHandler):
             urgency = str(arguments.get("urgency", "")).lower().strip()
             wait_time_days = float(arguments.get("wait_time_days", 0))
             price_difference = float(decision["savings"])
-            savings_per_day = price_difference if wait_time_days <= 0 else price_difference / wait_time_days
+            if price_difference <= 0:
+                savings_per_day = 0.0
+            else:
+                savings_per_day = price_difference if wait_time_days <= 0 else price_difference / wait_time_days
 
             if urgency in {"urgent", "soon"}:
-                interpretation = "Urgency parameter is urgent or soon, so the deterministic rule returns Buy now."
+                interpretation = "Urgency parameter is urgent or soon, so the deterministic rule returns the buy_now result."
             elif price_difference <= 0:
                 interpretation = "No positive price difference is detected based on the provided inputs."
             elif savings_per_day > SAVINGS_PER_DAY_THRESHOLD:
