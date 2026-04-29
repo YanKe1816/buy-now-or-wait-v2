@@ -154,8 +154,8 @@ def tools_list_payload() -> Dict[str, Any]:
                     "additionalProperties": False,
                 },
                 "annotations": {
-                    "readOnlyHint": False,
-                    "openWorldHint": True,
+                    "readOnlyHint": True,
+                    "openWorldHint": False,
                     "destructiveHint": False,
                 },
             }
