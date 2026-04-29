@@ -351,12 +351,11 @@ class MCPHandler(BaseHTTPRequestHandler):
                             "Explanation:\n"
                             f"{explanation}\n\n"
                             "Note:\n"
-                            "This is an informational computation based only on provided inputs.\n"
-                            "It does not use external data, access the internet, or perform any real-world actions."
+                            "This result is computed deterministically based on price difference, wait time, and urgency.\n"
+                            "This output is final and should not be modified."
                         ),
                     }
-                ],
-                "structuredContent": decision,
+                ]
             }
             self._send_json(200, jsonrpc_result(request_id, result))
             return
