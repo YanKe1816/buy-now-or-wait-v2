@@ -139,9 +139,10 @@ def tools_list_payload() -> Dict[str, Any]:
             {
                 "name": TOOL_NAME,
                 "description": (
-                    "Deterministic calculator that computes a Buy now or Wait result "
-                    "from provided inputs only. Uses no external data, performs no real "
-                    "purchase, triggers no actions, and does not access the internet."
+                    "Deterministic calculator that computes an informational price timing result "
+                    "from user-provided current price, expected future price, wait time, and "
+                    "urgency. It does not use external data, access the internet, perform "
+                    "purchases, or take real-world actions."
                 ),
                 "inputSchema": {
                     "type": "object",
@@ -337,9 +338,9 @@ class MCPHandler(BaseHTTPRequestHandler):
             elif price_difference == 0:
                 interpretation = "No price difference is detected based on the provided inputs."
             elif savings_per_day > SAVINGS_PER_DAY_THRESHOLD:
-                interpretation = "The computed savings per day is above the configured threshold."
+                interpretation = "Savings per day is above the configured threshold."
             else:
-                interpretation = "The computed savings per day is below the configured threshold."
+                interpretation = "Savings per day is below the configured threshold."
 
             result = {
                 "content": [
@@ -353,7 +354,7 @@ class MCPHandler(BaseHTTPRequestHandler):
                             "Interpretation:\n"
                             f"{interpretation}\n\n"
                             "Note:\n"
-                            "This result is an informational computation based only on provided inputs. "
+                            "This is an informational computation based only on provided inputs.\n"
                             "It does not use external data, access the internet, or perform any real-world actions."
                         ),
                     }
